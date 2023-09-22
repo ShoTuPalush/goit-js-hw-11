@@ -3,26 +3,34 @@ const gallery = document.querySelector('.gallery');
 export function renderPhoto(data) {
   const markup = data
     .map(
-      photo =>
-        `<a href='${photo.largeImageURL}' class='card-link'>
+      ({
+        largeImageURL,
+        tags,
+        webformatURL,
+        likes,
+        views,
+        comments,
+        downloads,
+      }) =>
+        `<a href='${largeImageURL}' class='card-link'>
         <div class="photo-card">
-            <img src="${photo.webformatURL}" alt="${photo.tags}" loading="lazy" />
+            <img src="${webformatURL}" alt="${tags}" loading="lazy" />
             <div class="info">
                 <p class="info-item">
                     <b>Likes</b>
-                    ${photo.likes} 
+                    ${likes} 
                 </p>
                 <p class="info-item">
                     <b>Views</b>
-                    ${photo.views} 
+                    ${views} 
                 </p>
                 <p class="info-item">
                     <b>Comments</b>
-                    ${photo.comments} 
+                    ${comments} 
                 </p>
                 <p class="info-item">
                     <b>Downloads</b>
-                    ${photo.downloads} 
+                    ${downloads} 
                 </p>
             </div>
         </div>

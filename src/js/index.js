@@ -1,20 +1,19 @@
 import Notiflix from 'notiflix';
-import { getPhoto } from './pixabyAPI';
-import { renderPhoto } from './createMarkup';
 import SimpleLightbox from 'simplelightbox';
 import debounce from 'lodash.debounce';
+import { getPhoto } from './pixabyAPI';
+import { renderPhoto } from './createMarkup';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
 const form = document.querySelector('.search-form');
 const gallery = document.querySelector('.gallery');
-const load = document.querySelector('.load-more');
+const loader = document.querySelector('.loader');
+const backdrop = document.querySelector('.backdrop');
+
+form.addEventListener('submit', submitSearch);
 
 let pages = 1;
 let end = false;
-
-form.addEventListener('submit', submitSearch);
-load.addEventListener('click', loadPhoto);
-
 var lightbox = new SimpleLightbox('.gallery a', {
   captionsData: 'alt',
   captionDelay: 250,
@@ -24,38 +23,49 @@ function submitSearch(event) {
   event.preventDefault();
   pages = 1;
   gallery.innerHTML = '';
-  load.classList.add('is-hidden');
   end = false;
 
-  getPhoto(form.elements.searchQuery.value, pages).then(photos => {
-    if (photos.data.hits.length > 0) {
-      load.classList.remove('is-hidden');
-      renderPhoto(photos.data.hits);
-      endPhoto(photos.data.totalHits);
-      messageTotalHits(photos.data.totalHits);
-      lightbox.refresh();
-    } else {
-      Notiflix.Notify.failure(
-        'Sorry, there are no images matching your search query. Please try again.'
-      );
-    }
-  });
+  getPhoto(form.elements.searchQuery.value, pages)
+    .then(loader.classList.remove('is-hidden'))
+    .then(backdrop.classList.remove('is-hidden'))
+    .then(async photos => {
+      if (photos.data.hits.length > 0) {
+        renderPhoto(photos.data.hits);
+        endPhoto(photos.data.totalHits);
+        messageTotalHits(photos.data.totalHits);
+        await lightbox.refresh();
+      } else {
+        Notiflix.Notify.failure(
+          'Sorry, there are no images matching your search query. Please try again.'
+        );
+      }
+    })
+    .finally(() => {
+      backdrop.classList.add('is-hidden');
+      loader.classList.add('is-hidden');
+    });
 }
 
 function loadPhoto() {
   pages += 1;
-  getPhoto(form.elements.searchQuery.value, pages).then(photos => {
-    endPhoto(photos.data.totalHits);
-    renderPhoto(photos.data.hits);
-    lightbox.refresh();
-    slowScroll();
-  });
+  getPhoto(form.elements.searchQuery.value, pages)
+    .then(loader.classList.remove('is-hidden'))
+    .then(backdrop.classList.remove('is-hidden'))
+    .then(async photos => {
+      endPhoto(photos.data.totalHits);
+      renderPhoto(photos.data.hits);
+      await lightbox.refresh();
+      slowScroll();
+    })
+    .finally(() => {
+      backdrop.classList.add('is-hidden');
+      loader.classList.add('is-hidden');
+    });
 }
 
 function endPhoto(totalHits) {
   if (totalHits < 40 * pages) {
     end = true;
-    load.classList.add('is-hidden');
   }
 }
 
@@ -68,7 +78,7 @@ function slowScroll() {
     .querySelector('.gallery')
     .firstElementChild.getBoundingClientRect();
 
-  document.scrollBy({
+  window.scrollBy({
     top: cardHeight * 2,
     behavior: 'smooth',
   });
@@ -90,5 +100,5 @@ document.addEventListener(
         );
       }
     }
-  }, 1000)
+  }, 500)
 );
